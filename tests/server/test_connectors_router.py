@@ -561,11 +561,18 @@ def test_connect_granola_invalid_key_returns_400_keeps_existing(
     from unittest.mock import patch
 
     from openjarvis.connectors.granola import GranolaConnector, GranolaKeyError
-    from openjarvis.server.connectors_router import _instances
+    from openjarvis.server.connectors_router import (
+        _ensure_connectors_registered,
+        _instances,
+    )
 
     creds = tmp_path / "granola.json"
     creds.write_text(json.dumps({"token": "grl_real_existing_key"}))
     _instances["granola"] = GranolaConnector(credentials_path=str(creds))
+    # Populate the registry first: if it is empty, the connect route reloads
+    # connector modules, which would undo the patch below and send a real
+    # request to Granola.
+    _ensure_connectors_registered()
     try:
         with patch(
             "openjarvis.connectors.granola._granola_api_validate_key",
@@ -709,11 +716,23 @@ def test_connect_weather_requires_location(app, tmp_path: Path) -> None:
         _instances.pop("weather", None)
 
 
-def test_connect_news_rss_requires_and_persists_feeds(app, tmp_path: Path) -> None:
+def test_connect_news_rss_requires_and_persists_feeds(
+    app, tmp_path: Path, monkeypatch
+) -> None:
     """A local connector with required setup cannot claim success for ``{}``."""
+    from openjarvis.connectors import news_rss
     from openjarvis.connectors.news_rss import NewsRSSConnector
-    from openjarvis.server.connectors_router import _instances
+    from openjarvis.server.connectors_router import (
+        _ensure_connectors_registered,
+        _instances,
+    )
 
+    # Resolve the feed host without real DNS. Populate the registry first so
+    # the connect route does not reload the module and discard this patch.
+    _ensure_connectors_registered()
+    monkeypatch.setattr(
+        news_rss, "_resolve_host_addresses", lambda _host, _port: ("93.184.215.14",)
+    )
     path = tmp_path / "news_rss.json"
     instance = NewsRSSConnector(config_path=str(path))
     instance.sync = lambda **_kwargs: iter(())
