@@ -94,6 +94,17 @@
       "reason": "The current OS credential-store backend requires Zbus 5 derive macros. This is a maintenance-only migration notice, not a vulnerability; changing the backend requires separate credential persistence validation.",
       "upstream": "https://rustsec.org/advisories/RUSTSEC-2026-0372.html",
       "expires": "2026-12-16"
+    },
+    {
+      "lockfile": "rust/Cargo.lock",
+      "package": "chrono",
+      "version": "0.4.45",
+      "advisories": [
+        "RUSTSEC-2026-0543"
+      ],
+      "reason": "RustSec reports an unmaintained-package notice for every chrono release, not a vulnerability or unsoundness, and no maintained chrono version exists. The backend crates use chrono directly for timestamps; replacing it with jiff or time is a separate migration across openjarvis-core and its dependents. Track this exact version until that migration lands.",
+      "upstream": "https://rustsec.org/advisories/RUSTSEC-2026-0543.html",
+      "expires": "2026-12-16"
     }
   ]
 }
